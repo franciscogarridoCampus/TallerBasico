@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Página Básica con Bootstrap</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Mi Sitio</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active"><a class="nav-link" href="#">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Acerca de</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <h1>Bienvenido a mi sitio</h1>
+                <p>Este es un ejemplo básico usando Bootstrap y HTML estático.</p>
+
+                <!-- Mensaje estático para usuario admin -->
+                <div class="alert alert-success" role="alert">
+                    Hola admin
+                </div>
+
+                <div class="row">
+                    <!-- Producto 1 -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <img src="https://www.hp.com/es-es/shop/Html/Merch/Images/c08522780_1750x1285.jpg"
+                                class="card-img-top" alt="Imagen de HP">
+                            <div class="card-body">
+                                <h5 id="titulo" class="card-title">HP</h5>
+                                <p id="descripcion" class="card-text">dess</p>
+                                <p id="precio " class="card-text">Precio: $870</p>
+                                <a id="boton" href="#" class="btn btn-primary">Comprar ahora</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <img id="imagen" src="" class="card-img-top" alt="Imagen del producto">
+                            <div class="card-body">
+                                <h5 id="titulo2" class="card-title"></h5>
+                                <p id="descripcion2" class="card-text"></p>
+                                <p id="precio2" class="card-text"></p>
+                                <a id="boton2" href="#" class="btn btn-primary">Comprar ahora</a>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+
+
+
+            <div class="col-md-4">
+                <h2>Noticias</h2>
+                <p>Algunos contenidos adicionales en la barra lateral.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="guiones.js"></script>
+    <script>
+        let productoTitulo = document.getElementById("titulo2");
+        let productoPrecio = document.getElementById("precio2");
+        let productoDescripcion = document.getElementById("descripcion2");
+        let productoImagen = document.getElementById("imagen");
+        productoTitulo.innerText = producto.nombre;
+        productoPrecio.innerText = producto.precio;
+        productoDescripcion.innerText = producto.descripcion;
+        productoImagen.src = producto.url;
+    </script>
+</body>
+
+</html>

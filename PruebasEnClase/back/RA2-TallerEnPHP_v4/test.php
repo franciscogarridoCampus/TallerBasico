@@ -25,8 +25,10 @@ $oGato->hacerSonido();
 
 //Vehiculos
 echo "<br>";
+echo "<br>";
 $bici= new bicicleta();
 
 $bici -> arrancar();
+echo "<br>";
 $bici -> detener();
 ?>

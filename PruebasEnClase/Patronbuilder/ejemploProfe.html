@@ -1,0 +1,249 @@
+<script>
+/**
+ * Práctica Evaluativa — Patrón Builder (Google Apps Script)
+ * Objeto: Ordenador (CPU, RAM, Storage, GPU, OS) + opcionales.
+ * Ejecuta main() y revisa Ver > Registros.
+ */
+
+/* =========================
+   "Enums" (objetos congelados)
+   ========================= */
+const CPUBrand     = Object.freeze({ INTEL: "INTEL", AMD: "AMD" });
+const RAMType      = Object.freeze({ DDR4: "DDR4", DDR5: "DDR5" });
+const StorageType  = Object.freeze({ SSD_NVME: "SSD_NVME", SSD_SATA: "SSD_SATA", HDD: "HDD" });
+const GPUVendor    = Object.freeze({ NVIDIA: "NVIDIA", AMD: "AMD", INTEL: "INTEL" });
+const OSEnum       = Object.freeze({ WINDOWS_11: "WINDOWS_11", UBUNTU_24_04: "UBUNTU_24_04", FEDORA_40: "FEDORA_40", DEBIAN_12: "DEBIAN_12" });
+const FormFactor   = Object.freeze({ ATX: "ATX", MICRO_ATX: "MICRO_ATX", MINI_ITX: "MINI_ITX" });
+const Rating80Plus = Object.freeze({ BRONZE: "BRONZE", SILVER: "SILVER", GOLD: "GOLD", PLATINUM: "PLATINUM" });
+const CoolingType  = Object.freeze({ AIR: "AIR", LIQUID: "LIQUID" });
+const MonitorTipo= Object.freeze({HDMI: "HDMI", VGA: "VGA"});
+
+/* =========================
+   Value Objects (clases con validaciones)
+   ========================= */
+class CPU {
+  constructor(brand, model, socket, cores, threads, baseGHz) {
+    this.brand = brand; this.model = model; this.socket = socket;
+    this.cores = cores; this.threads = threads; this.baseGHz = baseGHz;
+    if (cores < 2) throw new Error("CPU: cores >= 2");
+    if (threads < cores) throw new Error("CPU: threads >= cores");
+    if (baseGHz < 1.0) throw new Error("CPU: baseGHz >= 1.0");
+  }
+}
+
+class RAM {
+  constructor(sizeGB, type, speedMHz, modules) {
+    this.sizeGB = sizeGB; this.type = type; this.speedMHz = speedMHz; this.modules = modules;
+    if (sizeGB <= 0 || sizeGB % 4 !== 0) throw new Error("RAM: sizeGB debe ser múltiplo de 4");
+    if (modules <= 0) throw new Error("RAM: modules >= 1");
+  }
+}
+
+class Storage {
+  constructor(type, capacityGB) {
+    this.type = type; this.capacityGB = capacityGB;
+    if (capacityGB < 128) throw new Error("Storage: capacityGB >= 128");
+  }
+}
+
+class GPU {
+  constructor(vendor, model, vramGB, dedicated) {
+    this.vendor = vendor; this.model = model; this.vramGB = vramGB; this.dedicated = dedicated;
+    if (vramGB < 2) throw new Error("GPU: vramGB >= 2");
+  }
+}
+
+class OS {
+  constructor(name, licensed) {
+    this.name = name; this.licensed = licensed;
+  }
+}
+
+class Motherboard {
+  constructor(socket, chipset, formFactor, ramTypeSupported) {
+    this.socket = socket; this.chipset = chipset; this.formFactor = formFactor; this.ramTypeSupported = ramTypeSupported;
+  }
+}
+
+class PSU {
+  constructor(watts, rating) {
+    this.watts = watts; this.rating = rating;
+    if (watts < 400) throw new Error("PSU: watts >= 400");
+  }
+}
+
+class Cooling {
+  constructor(type) { this.type = type; }
+}
+
+class Connectivity {
+  constructor(wifi, bluetooth, ethernetGbps) {
+    this.wifi = wifi; this.bluetooth = bluetooth; this.ethernetGbps = ethernetGbps;
+    if (![1, 2, 10].includes(ethernetGbps)) throw new Error("Connectivity: ethernetGbps debe ser 1/2/10");
+  }
+}
+
+class Ports {
+  constructor(usbA, usbC, hdmi, displayPort) {
+    this.usbA = usbA; this.usbC = usbC; this.hdmi = hdmi; this.displayPort = displayPort;
+  }
+}
+
+class CaseBox {
+  constructor(model, supportsFormFactor) { this.model = model; this.supportsFormFactor = supportsFormFactor; }
+}
+
+class Monitor{
+    constructor(pulgadas,color,tipoConexion){
+        this.pulgadas= pulgadas;
+        this.color=color;
+        this.tipoConexion= tipoConexion;
+
+        if(pulgadas<15)throw new Error("PULGADAS: pulgadas >=15")
+    }
+}
+
+/* =========================
+   Entidad principal
+   ========================= */
+class Ordenador {
+  constructor(builder) {
+    // obligatorias
+    this.cpu = builder.cpu;
+    this.ram = builder.ram;
+    this.storage = builder.storage;
+    this.gpu = builder.gpu;
+    this.os = builder.os;
+    // opcionales
+    this.mb = builder.mb;
+    this.psu = builder.psu;
+    this.cooling = builder.cooling;
+    this.conn = builder.conn;
+    this.ports = builder.ports;
+    this.box = builder.box;
+    this.monitor=builder.monitor;
+  }
+
+  toString() {
+    const lines = [];
+    lines.push(`CPU: ${this.cpu.brand} ${this.cpu.model} (${this.cpu.cores}C/${this.cpu.threads}T ${this.cpu.baseGHz}GHz, ${this.cpu.socket})`);
+    lines.push(`RAM: ${this.ram.sizeGB}GB ${this.ram.type} ${this.ram.speedMHz}MHz (${this.ram.modules} módulos)`);
+    lines.push(`Almacenamiento: ${this.storage.type} ${this.storage.capacityGB}GB`);
+    lines.push(`GPU: ${this.gpu.vendor} ${this.gpu.model} ${this.gpu.vramGB}GB VRAM${this.gpu.dedicated ? " (dedicada)" : " (integrada)"}`);
+    lines.push(`SO: ${this.os.name}${this.os.licensed ? " (licenciado)" : " (sin licencia)"}`);
+    lines.push(`Placa: ${this.mb ? `${this.mb.socket} ${this.mb.chipset} ${this.mb.formFactor} RAM:${this.mb.ramTypeSupported}` : "—"}`);
+    lines.push(`PSU: ${this.psu ? `${this.psu.watts}W ${this.psu.rating}` : "—"}`);
+    lines.push(`Refrigeración: ${this.cooling ? this.cooling.type : "—"}`);
+    lines.push(`Conectividad: ${this.conn ? `WiFi:${this.conn.wifi} BT:${this.conn.bluetooth} Eth:${this.conn.ethernetGbps}Gbps` : "—"}`);
+    lines.push(`Puertos: ${this.ports ? `USB-A:${this.ports.usbA} USB-C:${this.ports.usbC} HDMI:${this.ports.hdmi} DP:${this.ports.displayPort}` : "—"}`);
+    lines.push(`Caja: ${this.box ? `${this.box.model} (${this.box.supportsFormFactor})` : "—"}`);
+    lines.push(`Caja: ${this.box ? `${this.box.model} (${this.box.supportsFormFactor})` : "—"}`);
+    lines.push(`Monitor: ${this.monitor.color ? `${this.monitor.pulgadas} (${this.monitor.tipoConexion})` : "—"}`);
+    return lines.join("\n");
+  }
+}
+
+/* =========================
+   Builder externo (sin campos de clase con '=')
+   ========================= */
+class OrdenadorBuilder {
+  constructor() {
+    // obligatorias
+    this.cpu = null;
+    this.ram = null;
+    this.storage = null;
+    this.gpu = null;
+    this.os = null;
+    // opcionales
+    this.mb = null;
+    this.psu = null;
+    this.cooling = null;
+    this.conn = null;
+    this.ports = null;
+    this.box = null;
+  }
+
+  // 5 setters obligatorios (métodos independientes)
+  setCPU(cpu)           { this.cpu = cpu; return this; }
+  setRAM(ram)           { this.ram = ram; return this; }
+  setStorage(stor)      { this.storage = stor; return this; }
+  setGPU(gpu)           { this.gpu = gpu; return this; }
+  setOS(os)             { this.os = os; return this; }
+  setMonitor(monitor)   {this.monitor=monitor;return this;}
+
+  // opcionales (varios)
+  withMotherboard(mb)   { this.mb = mb; return this; }
+  withPSU(psu)          { this.psu = psu; return this; }
+  withCooling(cooling)  { this.cooling = cooling; return this; }
+  withConnectivity(conn){ this.conn = conn; return this; }
+  withPorts(ports)      { this.ports = ports; return this; }
+  withCase(box)         { this.box = box; return this; }
+
+  build() {
+    // 1) presencia de obligatorias
+    if (!this.cpu || !this.ram || !this.storage || !this.gpu || !this.os || !this.monitor) {
+      throw new Error("Faltan componentes obligatorios: CPU, RAM, Storage, GPU u OS o Monitor.");
+    }
+    // 2) compatibilidades si hay opcionales
+    if (this.mb) {
+      if (String(this.mb.socket).toLowerCase() !== String(this.cpu.socket).toLowerCase()) {
+        throw new Error(`Incompatibilidad de socket: CPU=${this.cpu.socket} vs MB=${this.mb.socket}`);
+      }
+      if (this.mb.ramTypeSupported !== this.ram.type) {
+        throw new Error(`Incompatibilidad de RAM: RAM=${this.ram.type} vs MB soporta ${this.mb.ramTypeSupported}`);
+      }
+    }
+    if (this.os.name === OSEnum.WINDOWS_11 && !this.os.licensed) {
+      throw new Error("Windows 11 requiere licencia activa.");
+    }
+    if (this.gpu.dedicated && this.psu && this.psu.watts < 500) {
+      console.log("[AVISO] PSU recomendada >= 500W para GPU dedicada.");
+    }
+    if (this.box && this.mb && this.box.supportsFormFactor !== this.mb.formFactor) {
+      console.log(`[AVISO] La caja ${this.box.supportsFormFactor} puede no encajar con la placa ${this.mb.formFactor}.`);
+    }
+    return new Ordenador(this);
+  }
+}
+
+/* =========================
+   Demo
+   ========================= */
+function main() {
+  // Ordenador básico (Linux)
+  const basico = new OrdenadorBuilder()
+    .setCPU(new CPU(CPUBrand.INTEL, "Core i3-12100F", "LGA1700", 4, 8, 3.3))
+    .setRAM(new RAM(16, RAMType.DDR4, 3200, 2))
+    .setStorage(new Storage(StorageType.SSD_SATA, 512))
+    .setGPU(new GPU(GPUVendor.INTEL, "UHD 730", 2, false))
+    .setOS(new OS(OSEnum.UBUNTU_24_04, true))
+    .setMonitor(new Monitor("Rojo",22,MonitorTipo.HDMI))
+    .withMotherboard(new Motherboard("LGA1700", "B660", FormFactor.MICRO_ATX, RAMType.DDR4))
+    .withPSU(new PSU(500, Rating80Plus.BRONZE))
+    .withConnectivity(new Connectivity(true, true, 1))
+    .withPorts(new Ports(4, 1, 1, 1))
+    .withCase(new CaseBox("NZXT H210", FormFactor.MINI_ITX)) // mostrará aviso de factor de forma
+    .build();
+
+  console.log("=== ORDENADOR BÁSICO ===\n" + basico.toString() + "\n");
+
+  // Ordenador gaming (Windows 11 licenciado)
+  const gaming = new OrdenadorBuilder()
+    .setCPU(new CPU(CPUBrand.AMD, "Ryzen 5 7600", "AM5", 6, 12, 3.8))
+    .setRAM(new RAM(32, RAMType.DDR5, 6000, 2))
+    .setStorage(new Storage(StorageType.SSD_NVME, 1000))
+    .setGPU(new GPU(GPUVendor.NVIDIA, "RTX 4070", 12, true))
+    .setOS(new OS(OSEnum.WINDOWS_11, true))
+    .withMotherboard(new Motherboard("AM5", "B650", FormFactor.ATX, RAMType.DDR5))
+    .withPSU(new PSU(750, Rating80Plus.GOLD))
+    .withCooling(new Cooling(CoolingType.LIQUID))
+    .withConnectivity(new Connectivity(true, true, 2))
+    .withPorts(new Ports(6, 2, 1, 3))
+    .withCase(new CaseBox("Phanteks P400A", FormFactor.ATX))
+    .build();
+
+  console.log("=== ORDENADOR GAMING ===\n" + gaming.toString());
+}
+
+main() ;
+</script>
